@@ -7,19 +7,38 @@ import (
 	"time"
 
 	"github.com/mamaart/freestyle-timer/internal/timer"
+	"github.com/mamaart/freestyle-timer/models"
 )
+
+type athlete struct {
+	Name  string
+	Timer *timer.Timer
+}
+
+func newAthlete(name string, timer *timer.Timer) *athlete {
+	return &athlete{
+		Name:  name,
+		Timer: timer,
+	}
+}
+
+func (a *athlete) String() string {
+	return fmt.Sprintf("%s ::: %s", a.Timer.String(), a.Name)
+}
 
 type Session struct {
 	mu          sync.Mutex
-	athleteOne  *timer.Timer
-	athleteTwo  *timer.Timer
+	title       string
+	athleteOne  *athlete
+	athleteTwo  *athlete
 	activeTimer *timer.Timer
 }
 
-func New(d time.Duration) *Session {
+func New(opt models.Opt) *Session {
 	return &Session{
-		athleteOne: timer.New(d),
-		athleteTwo: timer.New(d),
+		title:      opt.SessionTitle,
+		athleteOne: newAthlete(opt.AthleteOneName, timer.New(2*time.Minute)),
+		athleteTwo: newAthlete(opt.AthleteTwoName, timer.New(2*time.Minute)),
 	}
 }
 
@@ -29,9 +48,9 @@ func (s *Session) withTimer(i int, fn func(t *timer.Timer) error) error {
 
 	switch i {
 	case 1:
-		return fn(s.athleteOne)
+		return fn(s.athleteOne.Timer)
 	case 2:
-		return fn(s.athleteTwo)
+		return fn(s.athleteTwo.Timer)
 	}
 
 	return errors.New("invalid timer number")
@@ -62,7 +81,7 @@ func (s *Session) Pause(i int) error {
 
 func (s *Session) String() string {
 	return fmt.Sprintf(
-		"Athlete One: %s\nAthlete Two: %s\n",
+		"%s\n%s\n",
 		s.athleteOne.String(),
 		s.athleteTwo.String(),
 	)

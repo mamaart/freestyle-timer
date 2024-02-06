@@ -3,38 +3,23 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
+	"net/http"
 
-	"github.com/mamaart/freestyle-timer/internal/session"
+	"github.com/gorilla/mux"
+	"github.com/mamaart/freestyle-timer/internal/api"
+	"github.com/mamaart/freestyle-timer/internal/app"
 )
 
 func main() {
-	s := session.New(time.Minute)
+	r := mux.NewRouter().StrictSlash(true)
+	a := api.New(app.New())
 
-	if err := s.Start(1); err != nil {
-		log.Fatal(err)
-	}
+	r.HandleFunc("/new", a.NewSession)
+	r.HandleFunc("/destroy", a.DestroySession)
+	r.HandleFunc("/start/{id}", a.StartTimer)
+	r.HandleFunc("/pause/{id}", a.PauseTimer)
+	r.HandleFunc("/state", a.GetState)
 
-	for i := 0; i < 5; i++ {
-		time.Sleep(time.Second)
-		fmt.Println(s.String())
-	}
-
-	if err := s.Pause(1); err != nil {
-		log.Fatal(err)
-	}
-
-	for i := 0; i < 5; i++ {
-		time.Sleep(time.Second)
-		fmt.Println(s.String())
-	}
-
-	if err := s.Start(2); err != nil {
-		log.Fatal(err)
-	}
-
-	for i := 0; i < 10; i++ {
-		time.Sleep(time.Second)
-		fmt.Println(s.String())
-	}
+	fmt.Println("Serving slack timer on port :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
