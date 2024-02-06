@@ -26,3 +26,15 @@ This project aims to develop a timer for a highline freestyle competition betwee
 - [ ] Session events can be streamed over the network.
 - [ ] Session events can be monitored live in a browser/app.
 - [ ] Previous sessions can be searched, exported as CSV, or deleted via browser/app interface.
+
+## Deployment requirements
+
+- [ ] The timer should be operable and viewable without internet/Wi-Fi connectivity.
+  - [ ] Device options include an laptop with a controller TUI for keyboard control.
+  - [ ] Alternatively, a Raspberry Pi with wired buttons for each event (or keyboard/display) could serve as the control device.
+  - [ ] For on-site visibility, a large display connected directly to the device via HDMI should be utilized.
+    - [ ] The display should show both timers and athlete names.
+- [ ] Timers should be controllable from one or multiple phones/apps over a secured network.
+- [ ] Multiple on-site screens should receive timer state updates over the network and display the timers (less secured network).
+- [ ] A website could provide live timer updates using either WebTransport or WebSocket protocols.
+- [ ] Livestreams should receive individual timer states for both Timer A and Timer B for retransmission purposes.
