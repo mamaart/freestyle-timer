@@ -3,20 +3,37 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/mamaart/freestyle-timer/internal/app"
 	"github.com/mamaart/freestyle-timer/models"
 )
 
 type Api struct {
-	app *app.App
+	app      *app.App
+	upgrader *websocket.Upgrader
 }
 
 func New(app *app.App) *Api {
-	return &Api{app: app}
+	return &Api{
+		app:      app,
+		upgrader: &websocket.Upgrader{},
+	}
+}
+
+func (a *Api) Serve() error {
+	r := mux.NewRouter()
+	r.HandleFunc("/new", a.NewSession)
+	r.HandleFunc("/destroy", a.DestroySession)
+	r.HandleFunc("/start/{id}", a.StartTimer)
+	r.HandleFunc("/pause/{id}", a.PauseTimer)
+	r.HandleFunc("/state", a.GetState)
+	r.HandleFunc("/", a.Listen)
+	return http.ListenAndServe(":8080", r)
 }
 
 func (a *Api) NewSession(w http.ResponseWriter, r *http.Request) {
@@ -92,4 +109,25 @@ func (a *Api) GetState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte(state))
+}
+
+func (a *Api) Listen(w http.ResponseWriter, r *http.Request) {
+	conn, err := a.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	ch, err := a.app.Listen()
+	if err != nil {
+		log.Println(err)
+		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		return
+	}
+
+	for x := range ch {
+		conn.WriteMessage(websocket.TextMessage, []byte(x))
+	}
 }

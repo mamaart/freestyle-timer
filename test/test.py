@@ -33,15 +33,4 @@ def pause(i):
     print(r.text)
 
 if __name__ == "__main__":
-    new_session()
-    print_state()
-
-    start(1)
-    time.sleep(2)
-
-    print_state()
-
-    pause(1)
-    time.sleep(2)
-
-    print_state()
+    start(2)
