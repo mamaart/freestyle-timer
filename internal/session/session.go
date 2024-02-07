@@ -34,11 +34,11 @@ type Session struct {
 	activeTimer *timer.Timer
 }
 
-func New(opt models.Opt) *Session {
+func New(opt models.Opt, bc1, bc2 chan<- time.Duration) *Session {
 	return &Session{
 		title:      opt.SessionTitle,
-		athleteOne: newAthlete(opt.AthleteOneName, timer.New(2*time.Minute)),
-		athleteTwo: newAthlete(opt.AthleteTwoName, timer.New(2*time.Minute)),
+		athleteOne: newAthlete(opt.AthleteOneName, timer.New(bc1)),
+		athleteTwo: newAthlete(opt.AthleteTwoName, timer.New(bc2)),
 	}
 }
 

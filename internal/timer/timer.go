@@ -12,15 +12,17 @@ type Timer struct {
 	control   chan bool
 	isRunning bool
 	done      chan bool
+	broadcast chan<- time.Duration
 }
 
-func New(d time.Duration) *Timer {
+func New(bc chan<- time.Duration) *Timer {
 	t := &Timer{
-		remaining: d,
+		remaining: time.Minute * 2,
 		control:   make(chan bool),
 		isRunning: false,
 		done:      make(chan bool),
 		ticker:    time.NewTicker(time.Second),
+		broadcast: bc,
 	}
 
 	t.ticker.Stop()
@@ -51,6 +53,7 @@ func (t *Timer) Await() {
 func (t *Timer) tick() bool {
 	if t.remaining > 0 {
 		t.remaining -= time.Second
+		t.broadcast <- t.remaining
 		return false
 	}
 	t.ticker.Stop()

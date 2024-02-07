@@ -32,7 +32,7 @@ func (a *Api) Serve() error {
 	r.HandleFunc("/start/{id}", a.StartTimer)
 	r.HandleFunc("/pause/{id}", a.PauseTimer)
 	r.HandleFunc("/state", a.GetState)
-	r.HandleFunc("/", a.Listen)
+	r.HandleFunc("/listen/{id}", a.Listen)
 	return http.ListenAndServe(":8080", r)
 }
 
@@ -120,14 +120,24 @@ func (a *Api) Listen(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	ch, err := a.app.Listen()
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		conn.WriteMessage(websocket.TextMessage, []byte("invalid athlete id"))
+		return
+	}
+	i, err := strconv.Atoi(id)
 	if err != nil {
-		log.Println(err)
+		conn.WriteMessage(websocket.TextMessage, []byte("invalid athlete id"))
+		return
+	}
+	ch, err := a.app.Listen(i)
+	if err != nil {
 		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 		return
 	}
 
-	for x := range ch {
+	for t := range ch {
+		x := fmt.Sprintf("%02d:%02d", int(t.Minutes()), int(t.Seconds())%60)
 		conn.WriteMessage(websocket.TextMessage, []byte(x))
 	}
 }
