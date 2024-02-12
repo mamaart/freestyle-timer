@@ -3,6 +3,9 @@ package session
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -35,11 +38,50 @@ type Session struct {
 }
 
 func New(opt models.Opt, bc1, bc2 chan<- time.Duration) *Session {
+	if err := generateImages(opt.AthleteOneName); err != nil {
+		log.Fatal(err)
+	}
+	if err := generateImages(opt.AthleteTwoName); err != nil {
+		log.Fatal(err)
+	}
 	return &Session{
 		title:      opt.SessionTitle,
 		athleteOne: newAthlete(opt.AthleteOneName, timer.New(bc1)),
 		athleteTwo: newAthlete(opt.AthleteTwoName, timer.New(bc2)),
 	}
+}
+
+func generateImages(name string) error {
+	remaining := time.Minute * 2
+	for remaining >= 0 {
+		svg := fmt.Sprintf(template, name, int(remaining.Minutes()), int(remaining.Seconds())%60)
+		basename := fmt.Sprintf("./svgs/%s-%03d", name, int(remaining.Seconds()))
+		file, err := os.Create(basename + ".svg")
+		if err != nil {
+			return err
+		}
+
+		if _, err := file.WriteString(svg); err != nil {
+			return err
+		}
+		file.Close()
+
+		if err := exec.Command(
+			"inkscape",
+			"-o",
+			basename+".png",
+			basename+".svg",
+		).Run(); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := os.Remove(basename + ".svg"); err != nil {
+			log.Fatal(err)
+		}
+
+		remaining -= time.Second
+	}
+	return nil
 }
 
 func (s *Session) withTimer(i int, fn func(t *timer.Timer) error) error {

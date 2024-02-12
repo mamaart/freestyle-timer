@@ -137,7 +137,7 @@ func (a *Api) Listen(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for t := range ch {
-		x := fmt.Sprintf("%02d:%02d", int(t.Minutes()), int(t.Seconds())%60)
-		conn.WriteMessage(websocket.TextMessage, []byte(x))
+		// x := fmt.Sprintf("%02d:%02d", int(t.Minutes()), int(t.Seconds())%60)
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprint(int(t.Seconds()))))
 	}
 }

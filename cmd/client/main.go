@@ -7,32 +7,54 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/mamaart/freestyle-timer/models"
+	"github.com/mamaart/freestyle-timer/pkg/image"
 )
 
 func main() {
-	newSession()
-	conn, resp, err := websocket.DefaultDialer.Dial("ws://localhost:8080/listen/1", nil)
+	// newSession()
+	go listenPlayer("martin", 1)
+	go listenPlayer("john", 2)
+	<-make(chan bool)
+}
+
+func listenPlayer(name string, i int) {
+	url := fmt.Sprintf("ws://localhost:8080/listen/%d", i)
+	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println(resp.Status)
+
+	ch := make(chan int)
+
+	s := image.NewImageState(name, ch)
+	if i == 1 {
+		go s.Run("one")
+	} else {
+		go s.Run("two")
+	}
 	for {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(string(data))
+		x, err := strconv.Atoi(string(data))
+		if err != nil {
+			log.Fatal(err)
+		}
+		ch <- x
 	}
 }
 
 func newSession() {
 	opt := models.Opt{
-		SessionTitle:   "first session",
+		SessionTitle:   "scandinavian finals",
 		AthleteOneName: "martin",
-		AthleteTwoName: "bob",
+		AthleteTwoName: "john",
 	}
 
 	buf := bytes.Buffer{}

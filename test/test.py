@@ -33,4 +33,7 @@ def pause(i):
     print(r.text)
 
 if __name__ == "__main__":
-    start(2)
+    #start(1)
+    #pause(1)
+    #start(2)
+    #pause(2)
